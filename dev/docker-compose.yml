@@ -1,6 +1,6 @@
 services:
   database:
-    container_name: solpay-postgres
+    container_name: solpay-postgres-dev
     image: postgres:18
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -19,64 +19,82 @@ services:
       - solpay-network
 
   solpay-core-service:
-    container_name: solpay-core-service
+    container_name: solpay-core-service-dev
     restart: on-failure
-    image: solpay-core-service:latest
+    image: ghcr.io/narutchai01/solpay-core-service:0.0.1
+    platform: linux/amd64 # <--- เพิ่มบรรทัดนี้
     ports:
       - "${APP_PORT}:${APP_PORT}"
     depends_on:
       database:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
-      DB_HOST: solpay-postgres
+      DB_HOST: solpay-postgres-dev
       DB_PORT: 5432
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       APP_PORT: ${APP_PORT}
-      MQ_HOST: solpay-rabbitmq
+      MQ_HOST: solpay-rabbitmq-dev
       MQ_PORT: ${MQ_PORT}
       MQ_USER: ${MQ_USER}
       MQ_PASSWORD: ${MQ_PASSWORD}
       MQ_VHOST: ${MQ_VHOST}
-      MQ_URL: amqp://${MQ_USER}:${MQ_PASSWORD}@solpay-rabbitmq:${MQ_PORT}/${MQ_VHOST}
+      MQ_URL: amqp://${MQ_USER}:${MQ_PASSWORD}@solpay-rabbitmq-dev:${MQ_PORT}/${MQ_VHOST}
       SWAP_SERVICE_PORT: ${SWAP_SERVICE_PORT}
-      SWAP_SERVICE_URL: http://solpay-swap-service:${SWAP_SERVICE_PORT}/api/v1
+      SWAP_SERVICE_URL: http://solpay-swap-service-dev:${SWAP_SERVICE_PORT}/api/v1
+      SECRET_JWT: ${SECRET_JWT}
+      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS}
+      CORE_TRANSACTION_QUEUE: ${CORE_TRANSACTION_QUEUE}
+      CORE_BALANCE_QUEUE: ${CORE_BALANCE_QUEUE}
+      OMISE_KEY: ${OMISE_KEY}
+      OMISE_SECRET: ${OMISE_SECRET}
+      MINT_TOKEN_ADDRESS: ${MINT_TOKEN_ADDRESS}
+      RECEIVE_ADDRESS: ${RECEIVE_ADDRESS}
+      SUPABASE_PRIVATE_KEY: ${SUPABASE_PRIVATE_KEY}
+      SUPABASE_URL: ${SUPABASE_URL}
     networks:
       - solpay-network
 
   blockchain-queue:
-    container_name: solpay-blockchain-service
-    image: solpay-blockchain-service:latest
+    container_name: solpay-blockchain-service-dev
+    image: ghcr.io/narutchai01/solpay-blockchain-service:latest
+    platform: linux/amd64 # <--- เพิ่มบรรทัดนี้
     environment:
-      APP_PORT: 8009
-      MQ_HOST: solpay-rabbitmq
+      APP_PORT: ${SOLANA_WORK_QUERE}
+      MQ_HOST: solpay-rabbitmq-dev
       MQ_USER: ${MQ_USER}
       MQ_PASSWORD: ${MQ_PASSWORD}
       MQ_VHOST: ${MQ_VHOST}
-      MQ_URL: amqp://${MQ_USER}:${MQ_PASSWORD}@solpay-rabbitmq/${MQ_VHOST}
+      MQ_URL: amqp://${MQ_USER}:${MQ_PASSWORD}@solpay-rabbitmq-dev/${MQ_VHOST}
     ports:
-      - "8009:8009"
+      - "${SOLANA_WORK_QUERE}:${SOLANA_WORK_QUERE}"
     networks:
       - solpay-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   solpay-swap-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: solpay-swap-service
+    image: ghcr.io/narutchai01/solpay-swap-service:latest
+    container_name: solpay-swap-service-dev
+    platform: linux/amd64 # <--- เพิ่มบรรทัดนี้
     ports:
-      - "${PORT}:${PORT}"
+      - "${SWAP_SERVICE_PORT}:${SWAP_SERVICE_PORT}"
     environment:
-      - PORT=${PORT}
+      - PORT=${SWAP_SERVICE_PORT}
       - RPC_URL=${RPC_URL}
     restart: unless-stopped
     networks:
-      - solpay-core-service_solpay-network
+      - solpay-network
+    depends_on:
+      - solpay-core-service
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: solpay-rabbitmq
+    container_name: solpay-rabbitmq-dev
     ports:
       - "5672:5672" # พอร์ตสำหรับเชื่อมต่อรับ-ส่งข้อมูล (AMQP)
       - "15672:15672" # พอร์ตสำหรับหน้า Dashboard (RabbitMQ Management)
