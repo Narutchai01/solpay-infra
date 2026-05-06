@@ -53,6 +53,8 @@ services:
       RECEIVE_ADDRESS: ${RECEIVE_ADDRESS}
       SUPABASE_PRIVATE_KEY: ${SUPABASE_PRIVATE_KEY}
       SUPABASE_URL: ${SUPABASE_URL}
+      SLIP_INFORMATION: ${SLIP_INFORMATION}
+      ALLOW_ORIGIN: ${ALLOW_ORIGIN}
     networks:
       - solpay-network
       - gateway-nginx
