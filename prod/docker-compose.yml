@@ -6,8 +6,6 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5432:5432"
     volumes:
       - ./databasepg:/var/lib/postgresql
     healthcheck:
@@ -21,7 +19,7 @@ services:
   solpay-core-service:
     container_name: solpay-core-service-dev
     restart: on-failure
-    image: ghcr.io/narutchai01/solpay-core-service:0.0.3
+    image: ghcr.io/narutchai01/solpay-core-service:0.0.2
     platform: linux/amd64 # <--- เพิ่มบรรทัดนี้
     ports:
       - "${APP_PORT}:${APP_PORT}"
@@ -57,6 +55,7 @@ services:
       SUPABASE_URL: ${SUPABASE_URL}
     networks:
       - solpay-network
+      - gateway-nginx
 
   blockchain-queue:
     container_name: solpay-blockchain-service-dev
@@ -113,3 +112,5 @@ services:
 networks:
   solpay-network:
     driver: bridge
+  gateway-nginx:
+    external: true
