@@ -19,7 +19,7 @@ services:
   solpay-core-service:
     container_name: solpay-core-service-dev
     restart: on-failure
-    image: ghcr.io/narutchai01/solpay-core-service:0.0.3
+    image: ghcr.io/narutchai01/solpay-core-service:latest
     platform: linux/amd64 # <--- เพิ่มบรรทัดนี้
     ports:
       - "${APP_PORT}:${APP_PORT}"
